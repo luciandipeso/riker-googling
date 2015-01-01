@@ -1,0 +1,31 @@
+{
+  "name": "riker-googling",
+  "version": "0.1.0",
+  "description": "Let Riker Google That For You",
+  "keywords": [],
+  "homepage": "https://github.com/luciandipeso/riker-googling",
+  "bugs": "https://github.com/luciandipeso/riker-googling/issues",
+  "author": {
+    "name": "Lucian DiPeso",
+    "email": "ldipeso@gmail.com",
+    "url": "https://github.com/luciandipeso"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luciandipeso/riker-googling.git"
+  },
+  "licenses": [
+    {
+      "type": "MIT"
+    }
+  ],
+  "dependencies": {
+    "express": "^4.10.6",
+    "serve-static": "^1.7.1",
+    "compression": "^1.3.0",
+    "validator": "^3.27.0",
+    "async": "^0.9.0",
+    "twitter": "^1.0.1",
+    "sqlite3": "^3.0.4"
+  }
+}

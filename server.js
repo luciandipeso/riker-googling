@@ -4,7 +4,6 @@ var compress = require('compression');
 var sqlite = require('sqlite3').verbose();
 var validator = require('validator');
 var fs = require('fs');
-var async = require('async');
 var path = require('path');
 var twitter = require('twitter');
 var bi = require('./deps/biginteger/biginteger.js');
@@ -148,50 +147,19 @@ function fillCache(tweets) {
 //setInterval(rebuildCache, 86400000)
 
 // Routes
-server.get('/autocomplete', function(req, res) {
-  var search = "";
+server.get('/tweets.json', function(req, res) {
+  res.header('Content-Type', 'application/javascript');
   var tweets = [];
 
-  if(req.query.q && req.query.q.length) {
-    search = req.query.q;
-    var params = {
-      $tweet: search + "%"
+  var query = "SELECT tweet FROM tweets";
+  db.all(query, function(err, rows) {
+    if(err) {
+      return res.status(500).jsonp(err);
     }
 
-    var indices = [];
-    if(search.length >= 1) {
-      params.$char0 = search.substring(0,1);
-      indices[0] = "char0 = $char0";
-    }
-    if(search.length >= 2) {
-      params.$char1 = search.substring(1,2);
-      indices[1] = "char1 = $char1";
-    }
-    if(search.length >= 3) {
-      params.$char2 = search.substring(2,3);
-      indices[2] = "char2 = $char2";
-    }
-
-    var query = "SELECT tweet FROM tweets WHERE " + indices.join(" AND ") + " AND tweet LIKE $tweet ORDER BY tweet LIMIT 20";
-    db.each(query, params, function(err, row) {
-      if(err) {
-        res.header('Content-Type', 'application/javascript');
-        return res.status(500).jsonp('Unknown error');
-      }
-
-      tweets.push(row.tweet);
-    }, function(err) {
-      if(err) {
-        res.header('Content-Type', 'application/javascript');
-        return res.status(500).jsonp('Unknown error');
-      }
-
-      res.header('Content-Type', 'application/javascript');
-      return res.jsonp({ 
-        tweets: tweets
-      });
-    });
-  }
+    tweets = rows
+    return res.jsonp(tweets);
+  });
 });
 
 var oneDay = 24*60*60*1000;

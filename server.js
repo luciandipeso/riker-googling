@@ -143,8 +143,8 @@ function fillCache(tweets) {
     dbRw.close();
   });
 }
-//rebuildCache();
-//setInterval(rebuildCache, 86400000)
+rebuildCache();
+setInterval(rebuildCache, 86400000)
 
 // Routes
 server.get('/tweets.json', function(req, res) {

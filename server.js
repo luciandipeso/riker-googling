@@ -6,7 +6,7 @@ var validator = require('validator');
 var fs = require('fs');
 var path = require('path');
 var twitter = require('twitter');
-var bi = require('./deps/biginteger/biginteger.js');
+var bigInt = require('big-integer');
 
 /**
  * Logging
@@ -46,7 +46,7 @@ function rebuildCache(maxId, tweets, tries, sinceId) {
       tweets = tweets || {};
 
   if(maxId) {
-    bigIntMaxId = bi.BigInteger(maxId);
+    bigIntMaxId = bigInt(maxId);
   }
 
   var queryObj = { 

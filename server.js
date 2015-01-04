@@ -1,3 +1,4 @@
+var bunyan = require('bunyan');
 var express = require('express');
 var serveStatic = require('serve-static');
 var compress = require('compression');
@@ -7,11 +8,32 @@ var fs = require('fs');
 var path = require('path');
 var twitter = require('twitter');
 var bigInt = require('big-integer');
+var nconf = require('nconf');
+
+nconf.argv()
+     .env();
+
+var env = nconf.get('NODE_ENV') || "dev";
+nconf.file({ file: __dirname + "/conf/" + env + ".conf.json" });
 
 /**
  * Logging
  */
-//TODO
+var log = bunyan.createLogger({
+  name: 'riker-googling', 
+  version: nconf.get("version"), 
+  port: nconf.get("serverPort"),
+  streams: [
+    {
+      level: 'info',
+      stream: process.stdout   
+    },
+    {
+      level: 'warn',
+      path: __dirname + "/logs/error.log"
+    }
+  ]
+});
 
 /**
  * Cache of Riker tweets
@@ -24,16 +46,16 @@ var dbFile = 'riker.db',
  */
 var server = express();
 server.use(compress());
-server.listen(process.env.RIKER_SERVER_PORT || 8080);
+server.listen(nconf.get("serverPort"));
 
 /**
  * Twitter client
  */
 var client = new twitter({
-  consumer_key: process.env.RIKER_TWTR_CKEY,
-  consumer_secret: process.env.RIKER_TWTR_CSCRT,
-  access_token_key: process.env.RIKER_TWTR_ATKN,
-  access_token_secret: process.env.RIKER_TWTR_ASCRT
+  consumer_key: nconf.get("twitter").consumerKey,
+  consumer_secret: nconf.get("twitter").consumerSecret,
+  access_token_key: nconf.get("twitter").accessToken,
+  access_token_secret: nconf.get("twitter").accessSecret
 });
 
 // Rebuild Riker tweets
@@ -59,12 +81,14 @@ function rebuildCache(maxId, tweets, tries, sinceId) {
   }
 
   client.get('statuses/user_timeline.json', queryObj, function(err, params, response) {
-    console.log("Rebuilding", sinceId, maxId);
+    log.info({ sinceId: sinceId, maxId: maxId }, "Rebuilding cache");
     if(err) {
       if(tries >= 3) {
         // Stop
+        log.error({ sinceId: sinceId, maxId: maxId, tweets: tweets, err: err }, "Failed rebuilding cache after 3 tries");
         return;
       }
+      log.warn({ sinceId: sinceId, maxId: maxId, err: err }, "Error querying Twitter");
       return rebuildCache(maxId, tweets, tries+1, sinceId);
     }
 
@@ -118,11 +142,11 @@ function rebuildCache(maxId, tweets, tries, sinceId) {
 };
 
 function fillCache(tweets) {
-  console.log("Filling");
+  log.info("Filling cache");
   var dbRw = new sqlite.Database(dbFile);
   dbRw.run("DELETE FROM tweets", function(err) {
     if(err) {
-      console.log(err);
+      log.error({ err: err }, "Unable to clear cache.");
       return;
     }
 
@@ -154,6 +178,7 @@ server.get('/tweets.json', function(req, res) {
   var query = "SELECT tweet FROM tweets";
   db.all(query, function(err, rows) {
     if(err) {
+      log.warn({ err: err }, "Unable to query cache.");
       return res.status(500).jsonp(err);
     }
 

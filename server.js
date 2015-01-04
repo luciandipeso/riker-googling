@@ -30,7 +30,7 @@ var log = bunyan.createLogger({
     },
     {
       level: 'warn',
-      path: __dirname + "/logs/error.log"
+      path: __dirname + "/logs/app.log"
     }
   ]
 });
